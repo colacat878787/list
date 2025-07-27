@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超酷賀卡 - 祉龍</title>
+    <!-- 載入 Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 設定 Ma Shan Zheng 可愛字體 -->
+    <link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+    <style>
+        /* 設定全域字體為 Ma Shan Zheng */
+        body {
+            font-family: 'Ma Shan Zheng', cursive; /* 使用 Ma Shan Zheng 字體 */
+            overflow: hidden; /* 防止滾動條在動畫期間出現 */
+            position: relative; /* 為背景疊加層提供定位上下文 */
+            /* 新增的網頁背景 GIF */
+            background-image: url('https://i.pinimg.com/originals/1f/3c/e3/1f3ce3f2fb77aeb542d616158e3b40a7.gif');
+            background-size: cover; /* 確保圖片覆蓋整個背景 */
+            background-attachment: fixed; /* 讓背景圖片固定不動 */
+            background-repeat: no-repeat; /* 不重複圖片 */
+            background-position: center center; /* 圖片居中 */
+            /* 自定義滑鼠游標為金色星星 */
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path fill="gold" d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.25l-6.18 3.25L7 14.14l-5-4.87 8.91-1.29L12 2z"/></svg>') 12 12, auto;
+        }
+
+        /* 背景疊加層 - 靜態噪音/紋理 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(circle at center, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0.1) 100%);
+            background-size: 200% 200%;
+            animation: subtle-pulse 20s infinite alternate;
+            z-index: -1; /* 確保在背景漸變之上但在內容之下 */
+            pointer-events: none;
+        }
+
+        @keyframes subtle-pulse {
+            0% { background-position: 0% 0%; opacity: 0.8; }
+            100% { background-position: 100% 100%; opacity: 1; }
+        }
+
+        /* 卡片 3D 懸停效果 (僅限首頁卡片) */
+        .card-3d-effect {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+            transition: transform 0.3s ease-out, box-shadow 0.3s ease-out, filter 0.3s ease-out; /* 添加 filter 過渡 */
+        }
+
+        .card-3d-effect:hover {
+            transform: rotateX(5deg) rotateY(5deg) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); /* 更明顯的陰影 */
+            filter: brightness(1.1) saturate(1.1); /* 輕微提亮和飽和度 */
+        }
+
+        /* 打字機效果的遊標閃爍動畫 */
+        @keyframes blinkCaret {
+            from, to { border-color: transparent }
+            50% { border-color: #fff; }
+        }
+
+        .typing-text {
+            border-right: .15em solid #fff; /* 打字機遊標 */
+            white-space: pre-wrap; /* 允許換行並保留空白符 */
+            overflow: hidden; /* 隱藏溢出文字 */
+            animation: blinkCaret .75s step-end infinite;
+        }
+        /* 當打字完成後，移除遊標 */
+        .typing-text.typed {
+            border-right: none;
+        }
+
+        /* 頁面切換動畫 */
+        .page-transition {
+            transition: opacity 0.7s ease-in-out, transform 0.7s ease-in-out;
+        }
+        .page-hidden {
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: none; /* 完全隱藏 */
+        }
+        .page-visible {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            display: flex; /* 根據佈局需要顯示 */
+        }
+
+        /* 全螢幕卡片樣式 - 強化開啟特效 */
+        .fullscreen-card-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgba(0, 0, 0, 0.7); /* 半透明背景 */
+            z-index: 50; /* 確保在最上層 */
+            padding: 20px;
+            box-sizing: border-box;
+            opacity: 0; /* 初始隱藏 */
+            /* 隨機初始旋轉和縮放 */
+            transform: scale(0.5) rotate(calc(var(--random-rotate) * 1deg));
+            filter: blur(10px); /* 初始模糊 */
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out, filter 0.7s ease-out;
+        }
+        .fullscreen-card-container.page-visible {
+            opacity: 1;
+            transform: scale(1) rotate(0deg); /* 顯示狀態 */
+            filter: blur(0px); /* 清晰顯示 */
+        }
+
+        .fullscreen-card {
+            background-color: white;
+            border-radius: 3rem; /* 大圓角 */
+            padding: 2rem;
+            max-width: 90%;
+            max-height: 90%;
+            overflow-y: auto; /* 允許內容滾動 */
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .fullscreen-card .message-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            text-align: left;
+            padding-right: 1rem; /* 為滾動條留出空間 */
+            max-height: calc(100vh - 250px); /* 調整高度以適應不同螢幕 */
+        }
+
+        /* 自定義滾動條樣式 */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* 背景粒子動畫 */
+        @keyframes particle-fade-scale {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(0.5); opacity: 0; }
+        }
+
+        .bg-particle {
+            position: absolute;
+            width: 15px; /* 稍微大一點 */
+            height: 15px;
+            background-color: rgba(255, 255, 255, 0.2); /* 更柔和的顏色 */
+            border-radius: 50%;
+            animation: particle-fade-scale 8s ease-in-out infinite; /* 較慢、更平滑 */
+        }
+
+        /* 新的回首頁特效 CSS (Starlight Dissolve 升級版) */
+        .starlight-effect-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; /* 黑色背景 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            overflow: hidden;
+            opacity: 0; /* 初始隱藏 */
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .starlight-effect-container.active {
+            opacity: 1;
+        }
+
+        .starlight-particle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            opacity: 0;
+            animation: starlight-twinkle 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes starlight-twinkle {
+            0% { opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.5); }
+        }
+
+        .starlight-ripple {
+            position: absolute;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(173, 216, 230, 0.5) 0%, rgba(173, 216, 230, 0) 70%); /* 淺藍色光暈 */
+            border-radius: 50%;
+            opacity: 0;
+            transform: translate(-50%, -50%); /* 確保中心點在正中 */
+            animation: starlight-ripple-expand 1.5s ease-out forwards;
+        }
+
+        @keyframes starlight-ripple-expand {
+            0% { width: 0; height: 0; opacity: 0.8; }
+            100% { width: 1500px; height: 1500px; opacity: 0; }
+        }
+
+        /* 互動式滑鼠火花特效 */
+        .sparkle {
+            position: absolute;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle-fade 0.8s forwards;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+            z-index: 60; /* 確保在卡片內容之上 */
+        }
+
+        @keyframes sparkle-fade {
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(0.5); opacity: 0; }
+        }
+
+        /* 按鈕強化 */
+        .open-card-btn, #return-home-button {
+            transition: all 0.3s ease-in-out;
+        }
+        .open-card-btn:hover, #return-home-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <!-- 背景粒子 -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div class="bg-particle" style="animation-delay: 0s; left: 10%; top: 20%;"></div>
+        <div class="bg-particle" style="animation-delay: 2s; left: 30%; top: 50%;"></div>
+        <div class="bg-particle" style="animation-delay: 4s; left: 60%; top: 10%;"></div>
+        <div class="bg-particle" style="animation-delay: 6s; left: 80%; top: 70%;"></div>
+        <div class="bg-particle" style="animation-delay: 8s; left: 5%; top: 90%;"></div>
+        <div class="bg-particle" style="animation-delay: 10s; left: 45%; top: 30%;"></div>
+        <div class="bg-particle" style="animation-delay: 12s; left: 70%; top: 40%;"></div>
+    </div>
+
+    <!-- 首頁 - 兩張卡片封面 -->
+    <div id="home-page" class="page-transition page-visible flex flex-col md:flex-row items-center justify-center w-full max-w-6xl space-y-8 md:space-y-0 md:space-x-8">
+
+        <!-- 助理哥哥的卡片封面 -->
+        <div class="card-3d-effect relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 overflow-hidden transform hover:scale-105 transition-all duration-300 ease-in-out card-wrapper flex flex-col items-center justify-center min-h-[400px]">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-400 to-purple-600 opacity-10 rounded-3xl blur-xl"></div>
+            <div class="relative z-20 flex flex-col items-center justify-center h-full w-full">
+                <h2 class="text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-800 text-center">
+                    給助理哥哥
+                </h2>
+                <button data-card-target="brother" class="open-card-btn mt-8 px-8 py-4 bg-gradient-to-r from-green-400 to-blue-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-green-300">
+                    點擊開啟卡片 💌
+                </button>
+            </div>
+        </div>
+
+        <!-- 助理阿姨的卡片封面 -->
+        <div class="card-3d-effect relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 overflow-hidden transform hover:scale-105 transition-all duration-300 ease-in-out card-wrapper flex flex-col items-center justify-center min-h-[400px]">
+            <div class="absolute inset-0 bg-gradient-to-br from-pink-400 to-red-600 opacity-10 rounded-3xl blur-xl"></div>
+            <div class="relative z-20 flex flex-col items-center justify-center h-full w-full">
+                <h2 class="text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-red-800 text-center">
+                    給助理阿姨
+                </h2>
+                <button data-card-target="auntie" class="open-card-btn mt-8 px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                    點擊開啟卡片 💖
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 全螢幕卡片內容 (預設隱藏) -->
+    <div id="fullscreen-card-page" class="page-transition page-hidden fullscreen-card-container">
+        <div id="active-fullscreen-card" class="fullscreen-card">
+            <h2 id="fullscreen-card-title" class="text-5xl font-extrabold mb-6 bg-clip-text text-transparent"></h2>
+            <p class="text-gray-700 text-lg md:text-xl leading-relaxed mb-6 message-content custom-scrollbar">
+                <span id="fullscreen-message" class="typing-text inline-block text-left w-full"></span>
+            </p>
+            <p class="text-gray-600 text-md md:text-lg mt-auto font-semibold">
+                衷心感謝，<br>祉龍 敬上
+            </p>
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mt-8 w-full justify-center">
+                <button id="return-home-button" class="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-700 text-white font-bold rounded-full shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 ease-in-out focus:outline-none focus:ring-4 focus:ring-blue-300">
+                    回首頁
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 特效容器 (預設隱藏) -->
+    <div id="effect-page" class="page-transition page-hidden starlight-effect-container">
+        <!-- 特效元素會在這裡動態生成 -->
+    </div>
+
+    <script>
+        // 打字機效果函數
+        function typeMessage(elementId, message, delay = 30) {
+            const element = document.getElementById(elementId);
+            let i = 0;
+            element.textContent = ''; // 清空內容以開始打字
+            element.classList.remove('typed'); // 確保遊標顯示
+            element.classList.add('typing-text'); // 確保打字效果類別存在
+
+            return new Promise(resolve => {
+                function typeChar() {
+                    if (i < message.length) {
+                        element.textContent += message.charAt(i);
+                        i++;
+                        setTimeout(typeChar, delay);
+                    } else {
+                        element.classList.remove('typing-text');
+                        element.classList.add('typed');
+                        resolve(); // 打字完成後解決 Promise
+                    }
+                }
+                typeChar();
+            });
+        }
+
+        // 超酷回首頁特效函數 (Starlight Dissolve 升級版)
+        function triggerStarlightEffect() {
+            const effectPage = document.getElementById('effect-page');
+            const homePage = document.getElementById('home-page');
+            const fullscreenCardPage = document.getElementById('fullscreen-card-page');
+
+            // 隱藏當前頁面
+            fullscreenCardPage.classList.remove('page-visible');
+            fullscreenCardPage.classList.add('page-hidden');
+
+            // 顯示特效頁面並激活動畫
+            effectPage.classList.remove('page-hidden');
+            effectPage.classList.add('active'); // 激活過渡動畫
+            effectPage.innerHTML = ''; // 清空之前的特效元素
+
+            const numParticles = 250; // 增加星光數量，讓效果更密集
+            const effectDuration = 3000; // 特效持續時間 (毫秒)，再次延長
+
+            // 創建星光粒子
+            for (let i = 0; i < numParticles; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('starlight-particle');
+                // 讓粒子從中心附近生成，然後向外擴散
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 800; // 初始距離更大
+                const startX = `calc(50% + ${Math.cos(angle) * distance}px)`;
+                const startY = `calc(50% + ${Math.sin(angle) * distance}px)`;
+
+                particle.style.left = startX;
+                particle.style.top = startY;
+                particle.style.animationDelay = `${Math.random() * 2.5}s`; // 隨機延遲
+                particle.style.width = `${Math.random() * 6 + 4}px`; // 隨機大小
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${0.6 + Math.random() * 0.4})`; // 隨機顏色和亮度
+                effectPage.appendChild(particle);
+            }
+
+            // 創建中心光暈漣漪
+            const ripple = document.createElement('div');
+            ripple.classList.add('starlight-ripple');
+            effectPage.appendChild(ripple);
+
+            // 等待特效動畫完成後返回首頁
+            setTimeout(() => {
+                effectPage.classList.remove('active'); // 移除激活狀態，觸發淡出
+                // 等待淡出完成
+                setTimeout(() => {
+                    effectPage.classList.add('page-hidden'); // 完全隱藏特效頁面
+                    homePage.classList.remove('page-hidden');
+                    homePage.classList.add('page-visible');
+                    effectPage.innerHTML = ''; // 清空特效元素
+                }, 700); // 與 CSS transition 的時間一致
+            }, effectDuration);
+        }
+
+        // 滑鼠火花特效函數
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.classList.add('sparkle');
+            const size = Math.random() * 8 + 4; // 隨機大小
+            sparkle.style.width = `${size}px`;
+            sparkle.style.height = `${size}px`;
+            sparkle.style.left = `${x}px`;
+            sparkle.style.top = `${y}px`;
+            document.body.appendChild(sparkle);
+
+            sparkle.addEventListener('animationend', () => {
+                sparkle.remove();
+            });
+        }
+
+        // 頁面載入完成後執行
+        window.onload = function() {
+            // 訊息內容，使用 \n\n 來表示段落分隔
+            const messageBrother = `親愛的助理哥哥：\n\n您好！我是祉龍。回想起幾個禮拜前，我們因為要去羅東高中上程式體驗課，所以有機會到服務處受您的招待，真的非常感謝您那時候的熱情！我記得那時候只有我一個人，但您們都對我特別好，還辛苦地去幫我買午餐，而且最棒的是，我還可以自己點想吃的！這真的讓我又驚又喜，覺得被照顧得無微不至。\n\n那次的程式體驗課真的超酷的！雖然一開始有點緊張，但我從中學到了很多新的程式知識，感覺自己好像變厲害了！謝謝您為我們付出了這麼多，讓那次的學習之旅充滿了美好的回憶。希望您一切都順利，工作也開開心心！`;
+
+            const messageAuntie = `親愛的助理阿姨：\n\n您好！我是祉龍。還記得嗎？幾個禮拜前，我們為了去羅東高中上程式體驗課，特別到服務處受您的招待。那時候，您對我的照顧和招待，真的讓我印象深刻，心裡充滿了溫暖！我記得那時候只有我一個人，但您們都對我特別好，還辛苦地去幫我買午餐，而且最棒的是，我還可以自己點想吃的！您就像一位溫柔又細心的長輩，把所有事情都打理得好好的。\n\n在服務處的時候，您總是笑咪咪的，讓我一點都不覺得陌生。羅東高中的程式課也很有趣，雖然有些地方對我來說有點難，但我還是學到好多以前不知道的東西。那次的體驗真的讓我受益良多！\n\n這張卡片雖然小小的，卻代表了我滿滿的感謝。謝謝您無微不至的關懷，讓我在那段時間感受到家的溫暖。希望助理阿姨每天都開開心心，身體健康！`;
+
+            const homePage = document.getElementById('home-page');
+            const fullscreenCardPage = document.getElementById('fullscreen-card-page');
+            const fullscreenCardTitle = document.getElementById('fullscreen-card-title');
+            const fullscreenMessage = document.getElementById('fullscreen-message');
+            const returnHomeButton = document.getElementById('return-home-button');
+
+            // 處理卡片開啟邏輯
+            document.querySelectorAll('.open-card-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    let message = '';
+                    let titleText = '';
+                    let titleGradient = '';
+                    const targetCard = this.dataset.cardTarget;
+
+                    if (targetCard === 'brother') {
+                        message = messageBrother;
+                        titleText = '給助理哥哥';
+                        titleGradient = 'from-blue-600 to-purple-800';
+                    } else if (targetCard === 'auntie') {
+                        message = messageAuntie;
+                        titleText = '給助理阿姨';
+                        titleGradient = 'from-pink-600 to-red-800';
+                    }
+
+                    // 隱藏首頁
+                    homePage.classList.remove('page-visible');
+                    homePage.classList.add('page-hidden');
+
+                    // 設置隨機旋轉角度給全螢幕卡片
+                    const randomRotate = (Math.random() - 0.5) * 10; // -5 到 5 度
+                    fullscreenCardPage.style.setProperty('--random-rotate', randomRotate);
+
+                    // 顯示全螢幕卡片頁面
+                    fullscreenCardPage.classList.remove('page-hidden');
+                    fullscreenCardPage.classList.add('page-visible');
+
+                    // 設定全螢幕卡片內容
+                    fullscreenCardTitle.textContent = titleText;
+                    fullscreenCardTitle.className = `text-5xl font-extrabold mb-6 bg-clip-text text-transparent bg-gradient-to-r ${titleGradient}`; // 更新漸變色
+                    
+                    // 確保內容區域的滾動條在打字前重置到頂部
+                    const messageContainer = fullscreenCardPage.querySelector('.message-content');
+                    if (messageContainer) {
+                        messageContainer.scrollTop = 0;
+                    }
+
+                    // 開始打字效果
+                    typeMessage('fullscreen-message', message);
+                });
+            });
+
+            // 為回首頁按鈕添加事件監聽器
+            returnHomeButton.addEventListener('click', function() {
+                triggerStarlightEffect(); // 觸發超酷回首頁特效
+            });
+
+            // 為全螢幕卡片頁面添加滑鼠/觸控火花特效
+            fullscreenCardPage.addEventListener('mousemove', (e) => {
+                // 限制火花生成頻率
+                if (Math.random() < 0.3) { // 約 30% 機會生成火花
+                    createSparkle(e.clientX, e.clientY);
+                }
+            });
+            fullscreenCardPage.addEventListener('touchmove', (e) => {
+                if (e.touches.length > 0 && Math.random() < 0.3) {
+                    createSparkle(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            });
+        };
+    </script>
+</body>
+</html>
